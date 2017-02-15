@@ -39,11 +39,11 @@
 }
 
 @test "C system resources group correct" {
-  [[ $(stat -c %G /etc/dt/config/C/sys.resources) == "sys" ]]
+  [[ $(stat -c %g /etc/dt/config/C/sys.resources) == "0" ]]
 }
 
 @test "DE system resources group correct" {
-  [[ $(stat -c %G /etc/dt/config/DE/sys.resources) == "sys" ]]
+  [[ $(stat -c %g /etc/dt/config/DE/sys.resources) == "0" ]]
 }
 
 @test "C system resources labelString populated" {

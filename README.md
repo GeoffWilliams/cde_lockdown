@@ -4,10 +4,6 @@
 #### Table of Contents
 
 1. [Description](#description)
-1. [Setup - The basics of getting started with cde_lockdown](#setup)
-    * [What cde_lockdown affects](#what-cde_lockdown-affects)
-    * [Setup requirements](#setup-requirements)
-    * [Beginning with cde_lockdown](#beginning-with-cde_lockdown)
 1. [Usage - Configuration options and additional functionality](#usage)
 1. [Reference - An under-the-hood peek at what the module is doing and how](#reference)
 1. [Limitations - OS compatibility, etc.](#limitations)
@@ -15,70 +11,88 @@
 
 ## Description
 
-Start with a one- or two-sentence summary of what the module does and/or what
-problem it solves. This is your 30-second elevator pitch for your module.
-Consider including OS/Puppet version it works with.
-
-You can give more descriptive information in a second paragraph. This paragraph
-should answer the questions: "What does this module *do*?" and "Why would I use
-it?" If your module has a range of functionality (installation, configuration,
-management, etc.), this is the time to mention it.
+Lockdown the CDE on Aix and Solaris buy restricting permissions and altering banner messages
 
 ## Setup
 
-### What cde_lockdown affects **OPTIONAL**
-
-If it's obvious what your module touches, you can skip this section. For
-example, folks can probably figure out that your mysql_instance module affects
-their MySQL instances.
-
-If there's more that they should know about, though, this is the place to mention:
-
-* A list of files, packages, services, or operations that the module will alter,
-  impact, or execute.
-* Dependencies that your module automatically installs.
-* Warnings or other important notices.
-
-### Setup Requirements **OPTIONAL**
-
-If your module requires anything extra before setting up (pluginsync enabled,
-etc.), mention it here.
-
-If your most recent release breaks compatibility or requires particular steps
-for upgrading, you might want to include an additional "Upgrading" section
-here.
-
-### Beginning with cde_lockdown
-
-The very basic steps needed for a user to get the module up and running. This
-can include setup steps, if necessary, or it can be an example of the most
-basic use of the module.
+### What cde_lockdown affects
+* Set inactivity timeouts for CDE by writing files to /etc/dt/config for each locale in the /usr/dt/config directory
+* Ensure files under /etc/dt have correct permissions
+* Alter the default banner messages to prevent information disclosure
+* Disable remote logins
+* Remove SUID/SGID from CDE binaries
+* Lock down /etc/dt/confg/Xservers if it exists
 
 ## Usage
 
-This section is where you describe how to customize, configure, and do the
-fancy stuff with your module here. It's especially helpful if you include usage
-examples and code samples for doing things with your module.
+### General permissions and banner messages
+
+```puppet
+class { "cde_lockdown":
+  banner_title   => "Authorised users only",
+  banner_message => "Get off my lawn",
+}
+```
+
+### Prevent remote logins
+
+```puppet
+include cde_lockdown::remote
+```
+
+### Remove SUID
+
+```puppet
+include cde_lockdown::suid
+```
+
+### Explicit Xserver in Xconfig
+
+```puppet
+include cde_lockdown::xservers
+```
+
+### Suggested overall system usage
+
+```puppet
+class { "cde_lockdown":
+  banner_title   => "Authorised users only",
+  banner_message => "Get off my lawn",
+}
+include cde_lockdown::suid
+include cde_lockdown::remote
+include cde_lockdown::xservers
+```
+This will lock-down CDE to the extent possible using this module.  Users are free to pick and choose classes to suit their needs.
 
 ## Reference
 
-Here, include a complete list of your module's classes, types, providers,
-facts, along with the parameters for each. Users refer to this section (thus
-the name "Reference") to find specific details; most users don't read it per
-se.
+### Classes
+* `cde_lockdown` - banners and general permissions
+* `cde_lockdown::remote` - disable remote access
+* `cde_lockdown::suid` - remove suid
+* `cde_lockdown::xservers` - explicit Xserver
 
 ## Limitations
 
-This is where you list OS compatibility, version compatibility, etc. If there
-are Known Issues, you might want to include them under their own heading here.
+* Does not remove or disable CDE, only restrict it somewhat
+* AIX and Solaris only
+* Not supported by Puppet, Inc.
 
 ## Development
 
-Since your module is awesome, other users will want to play with it. Let them
-know what the ground rules for contributing are.
+PRs accepted :)
 
-## Release Notes/Contributors/Etc. **Optional**
+## Testing
+This module supports testing using [PDQTest](https://github.com/GeoffWilliams/pdqtest).
 
-If you aren't using changelog, put your release notes here (though you should
-consider using changelog). You can also add any additional sections you feel
-are necessary or important to include here. Please use the `## ` header.
+
+Test can be executed with:
+
+```
+bundle install
+bundle exec pdqtest all
+```
+
+
+See `.travis.yml` for a working CI example

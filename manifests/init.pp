@@ -15,14 +15,14 @@ class cde_lockdown(
   file { "/etc/dt":
     ensure => directory,
     owner  => "root",
-    group  => "root",
+    group  => 0,
     mode   => "0755",
   }
 
   file { "/etc/dt/config":
     ensure => directory,
     owner  => "root",
-    group  => "sys",
+    group  => 0,
     mode   => "0555",
   }
 
@@ -75,7 +75,7 @@ class cde_lockdown(
 
   chown_r { "/etc/dt/config":
     want_user  => "root",
-    want_group => "sys",
+    want_group => 0,
     require    => Exec["dt_config_files"],
   }
 }

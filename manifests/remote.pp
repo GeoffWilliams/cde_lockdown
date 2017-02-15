@@ -1,7 +1,7 @@
 # Aix_tidy::Cde
 #
 # Disable remote logins
-class aix_tidy::cde {
+class cde_lockdown::remote {
 
   #
   # Copy /usr/dt/config/Xconfig to /etc/dt/config if it does not already exist
