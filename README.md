@@ -73,6 +73,9 @@ This will lock-down CDE to the extent possible using this module.  Users are fre
 * `cde_lockdown::suid` - remove suid
 * `cde_lockdown::xservers` - explicit Xserver
 
+### Facts
+* `cde_installed` - Detects the presence of CDE by checking for the presence of the `/usr/dt/config` directory
+
 ## Limitations
 
 * Does not remove or disable CDE, only restrict it somewhat
