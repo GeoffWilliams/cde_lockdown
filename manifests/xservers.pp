@@ -19,18 +19,21 @@ class cde_lockdown::xservers {
 
   $install_exec       = "install ${etc_xconfig}"
 
-  # Install Xconfig if Xserver present (copy from /usr...)
-  exec { $install_exec:
-    command => $cp_xconfig,
-    onlyif  => $test_cp_file,
-    path    => ['/usr/bin', '/bin'],
-  }
+  if $facts['cde_installed'] {
 
-  # Next up, replace the line if we need to
-  exec { "${etc_xservers} lockdown change bad line":
-    command => $run_fix_bad_line,
-    onlyif  => $run_test_bad_line,
-    path    => ['/usr/bin','/bin'],
-    require => Exec[$install_exec],
+    # Install Xconfig if Xserver present (copy from /usr...)
+    exec { $install_exec:
+      command => $cp_xconfig,
+      onlyif  => $test_cp_file,
+      path    => ['/usr/bin', '/bin'],
+    }
+
+    # Next up, replace the line if we need to
+    exec { "${etc_xservers} lockdown change bad line":
+      command => $run_fix_bad_line,
+      onlyif  => $run_test_bad_line,
+      path    => ['/usr/bin','/bin'],
+      require => Exec[$install_exec],
+    }
   }
 }

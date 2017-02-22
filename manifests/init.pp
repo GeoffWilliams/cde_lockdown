@@ -35,47 +35,55 @@ class cde_lockdown(
   # correctly, possibly because its attempting to use /bin/sh (ksh)...
   # MUST sort the lists or they arrive in different orders and trigger extra
   # corrective changes
-  exec { "dt_config_dirs":
-    onlyif  => 'bash -c \'[[ $(cd /etc/dt/config && find . -name sys.resources | sort) != $(cd /usr/dt/config && find . \
--name sys.resources | sort) ]]\'',
-    command => 'bash -c \'cd /etc/dt/config && mkdir -p $(cd /usr/dt/config && find . -name sys.resources -exec dirname {} \; )\'',
-    path    => [ '/bin', '/usr/bin'],
-    require => File["/etc/dt/config"],
-  }
+  if $facts['cde_installed'] {
 
-  # for each shipped locale, replace contents of corresponding file under /etc/dt/config
-  # with our canned $file_content *if* any of the corresponding files are different
-  exec { "dt_config_files":
-    unless  => "bash -c 'cd /usr/dt/config/ && for file in */sys.resources ; do if [[ \"$(cat /etc/dt/config/\$file)\" \
-!= \"${file_content}\" ]]; then exit 1; fi; done'",
-    command => "bash -c 'for file in $(cd /usr/dt/config && find . -name sys.resources) ; do echo \"${file_content}\" >> \
-\"/etc/dt/config/\$file\"; done'",
-    path    => [ '/bin', '/usr/bin'],
-    require => [File["/etc/dt/config"], Exec["dt_config_dirs"],],
-  }
+    # ordering for chown_r and chmod_r
+    $fix_ownership_require = Exec["dt_config_files"]
 
-  # Greeting message for CDE
-  if $banner_title and $banner_message {
-    $res_content="Dtlogin*greeting.labelString: ${banner_title}\nDtlogin*greeting.persLabelString: ${banner_message}"
+    exec { "dt_config_dirs":
+      onlyif  => 'bash -c \'[[ $(cd /etc/dt/config && find . -name sys.resources | sort) != $(cd /usr/dt/config && find . \
+  -name sys.resources | sort) ]]\'',
+      command => 'bash -c \'cd /etc/dt/config && mkdir -p $(cd /usr/dt/config && find . -name sys.resources -exec dirname {} \; )\'',
+      path    => [ '/bin', '/usr/bin'],
+      require => File["/etc/dt/config"],
+    }
 
-    exec { "dt_resource_files":
-      unless  => "bash -c 'cd /usr/dt/config/ && for file in */Xresources ; do if [[ \"$(cat /etc/dt/config/\$file)\" \
-!= \"${res_content}\" ]]; then exit 1; fi; done'",
-      command => "bash -c 'for file in $(cd /usr/dt/config && find . -name Xresources) ; do echo \"${res_content}\" >> \
-\"/etc/dt/config/\$file\"; done'",
+    # for each shipped locale, replace contents of corresponding file under /etc/dt/config
+    # with our canned $file_content *if* any of the corresponding files are different
+    exec { "dt_config_files":
+      unless  => "bash -c 'cd /usr/dt/config/ && for file in */sys.resources ; do if [[ \"$(cat /etc/dt/config/\$file)\" \
+  != \"${file_content}\" ]]; then exit 1; fi; done'",
+      command => "bash -c 'for file in $(cd /usr/dt/config && find . -name sys.resources) ; do echo \"${file_content}\" >> \
+  \"/etc/dt/config/\$file\"; done'",
       path    => [ '/bin', '/usr/bin'],
       require => [File["/etc/dt/config"], Exec["dt_config_dirs"],],
     }
+
+    # Greeting message for CDE
+    if $banner_title and $banner_message {
+      $res_content="Dtlogin*greeting.labelString: ${banner_title}\nDtlogin*greeting.persLabelString: ${banner_message}"
+
+      exec { "dt_resource_files":
+        unless  => "bash -c 'cd /usr/dt/config/ && for file in */Xresources ; do if [[ \"$(cat /etc/dt/config/\$file)\" \
+  != \"${res_content}\" ]]; then exit 1; fi; done'",
+        command => "bash -c 'for file in $(cd /usr/dt/config && find . -name Xresources) ; do echo \"${res_content}\" >> \
+  \"/etc/dt/config/\$file\"; done'",
+        path    => [ '/bin', '/usr/bin'],
+        require => [File["/etc/dt/config"], Exec["dt_config_dirs"],],
+      }
+    }
+  } else {
+    $fix_ownership_require = undef
   }
 
   chmod_r { "/etc/dt/config/*":
     want_mode => "0444",
-    require   => Exec["dt_config_files"],
+    require   => $fix_ownership_require,
   }
 
   chown_r { "/etc/dt/config":
     want_user  => "root",
     want_group => 0,
-    require    => Exec["dt_config_files"],
+    require    => $fix_ownership_require,
   }
 }
